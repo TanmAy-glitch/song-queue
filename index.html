@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Queue &mdash; drop a song</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #14171c;
+    --panel: #1c2129;
+    --panel-line: #2a303b;
+    --text: #edeae3;
+    --muted: #8a8f98;
+    --amber: #c89b3c;
+    --amber-dim: #7a5f27;
+    --red: #b5453f;
+  }
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    min-height:100vh;
+  }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  header.hero{
+    padding: 72px 24px 48px;
+    max-width: 880px;
+    margin: 0 auto;
+    text-align:left;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--amber);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom: 18px;
+  }
+  .eyebrow .dot{
+    width:7px; height:7px; border-radius:50%;
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ opacity: 1; }
+    50%{ opacity: 0.35; }
+  }
+  h1{
+    font-size: clamp(34px, 6vw, 56px);
+    line-height: 1.05;
+    font-weight: 700;
+    margin: 0 0 16px;
+    letter-spacing: -0.01em;
+  }
+  h1 span{ color: var(--amber); }
+  .sub{
+    color: var(--muted);
+    font-size: 17px;
+    line-height: 1.6;
+    max-width: 56ch;
+    margin: 0;
+  }
+
+  /* --- signature element: the tape counter queue strip --- */
+  .counter{
+    max-width: 880px;
+    margin: 8px auto 56px;
+    padding: 0 24px;
+  }
+  .counter-frame{
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: 10px;
+    padding: 22px;
+  }
+  .counter-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .reel-row{
+    display:grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+  .slot{
+    background: #14171c;
+    border: 1px solid var(--panel-line);
+    border-radius: 8px;
+    padding: 14px 10px;
+    min-height: 84px;
+    display:flex;
+    flex-direction:column;
+    justify-content: space-between;
+    position: relative;
+    overflow:hidden;
+  }
+  .slot-name{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--amber);
+  }
+  .slot-body{
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+  .slot.filled{ border-color: var(--amber-dim); }
+  .slot.filled .slot-body{ color: var(--text); }
+  .slot::after{
+    content:"";
+    position:absolute; right:8px; top:8px;
+    width:6px; height:6px; border-radius:50%;
+    background: var(--panel-line);
+  }
+  .slot.filled::after{ background: var(--amber); }
+
+  /* --- form --- */
+  main{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+  form{
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: 10px;
+    padding: 28px;
+  }
+  label{
+    display:block;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .field{ margin-bottom: 20px; }
+  input[type=text]{
+    width:100%;
+    background: #14171c;
+    border: 1px solid var(--panel-line);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 14px;
+  }
+  input[type=text]:focus{
+    outline: none;
+    border-color: var(--amber);
+  }
+  .field-hint{
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  button{
+    background: var(--amber);
+    color: #14171c;
+    border: none;
+    border-radius: 6px;
+    padding: 13px 22px;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor:pointer;
+  }
+  button:focus-visible, a:focus-visible, input:focus-visible{
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+  }
+  button:hover{ background:#dcae4c; }
+  .form-note{
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  footer{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+    color: var(--muted);
+    font-size: 13px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  footer a{ color: var(--amber); }
+
+  @media (max-width: 640px){
+    .reel-row{ grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .eyebrow .dot{ animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow"><span class="dot"></span>live queue &middot; 5 slots</div>
+  <h1>Put a song<br>in the <span>queue</span>.</h1>
+  <p class="sub">Drop a YouTube link, when the song kicks in, and (optionally) when it ends. Hit submit — it writes straight to the queue, no sign-in, no extra tab.</p>
+</header>
+
+<div class="counter">
+  <div class="counter-frame">
+    <div class="counter-label">now queued</div>
+    <div class="reel-row" id="reelRow">
+      <div class="slot"><div class="slot-name">music</div><div class="slot-body">—</div></div>
+      <div class="slot"><div class="slot-name">music1</div><div class="slot-body">—</div></div>
+      <div class="slot"><div class="slot-name">music2</div><div class="slot-body">—</div></div>
+      <div class="slot"><div class="slot-name">music3</div><div class="slot-body">—</div></div>
+      <div class="slot"><div class="slot-name">music4</div><div class="slot-body">—</div></div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <form id="songForm">
+    <div class="field">
+      <label for="yturl">YouTube URL</label>
+      <input type="text" id="yturl" placeholder="https://www.youtube.com/watch?v=..." required>
+    </div>
+    <div class="field">
+      <label for="startTs">Where it starts</label>
+      <input type="text" id="startTs" placeholder="1:23" pattern="^\d{1,2}(:\d{2}){1,2}$" required>
+      <div class="field-hint">Format: m:ss or h:mm:ss</div>
+    </div>
+    <div class="field">
+      <label for="endTs">Where it ends <span style="text-transform:none;">(optional)</span></label>
+      <input type="text" id="endTs" placeholder="4:10" pattern="^\d{1,2}(:\d{2}){1,2}$">
+      <div class="field-hint">Leave blank to play to the end of the video</div>
+    </div>
+    <button type="submit" id="submitBtn">Add to queue</button>
+    <p class="form-note" id="formStatus">Writes directly to queue.txt in the repo — nothing to sign into.</p>
+  </form>
+</main>
+
+<footer>
+  queue.txt is the source of truth &middot; fetched by the local AHK player on refresh
+</footer>
+
+<script>
+  // ---- CONFIGURE THESE FOR YOUR REPO ----
+  const OWNER = "TanmAy-glitch";
+  const REPO  = "song-queue";
+  const BRANCH = "main";
+  const FILE_PATH = "queue.txt";
+
+  // Fine-grained PAT, scoped ONLY to this repo, "Contents: Read and write" only.
+  // Anyone who views this page's source can see and use this token against
+  // this one repo. Fine for a small trusted group; do not reuse this token
+  // anywhere else, and regenerate it if you ever want to revoke access.
+  const GITHUB_TOKEN = "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";
+  // ----------------------------------------
+
+  const API_BASE = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}`;
+
+  function b64EncodeUnicode(str){
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+  function b64DecodeUnicode(str){
+    return decodeURIComponent(escape(atob(str)));
+  }
+
+  async function getQueueFile(){
+    const res = await fetch(`${API_BASE}?ref=${BRANCH}&_=${Date.now()}`, {
+      headers: {
+        "Authorization": `Bearer ${GITHUB_TOKEN}`,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28"
+      },
+      cache: "no-store"
+    });
+    if(!res.ok) throw new Error(`Could not read queue.txt (${res.status})`);
+    const data = await res.json();
+    return { sha: data.sha, content: b64DecodeUnicode(data.content.replace(/\n/g, "")) };
+  }
+
+  async function appendToQueue(newLine, attempt = 1){
+    const { sha, content } = await getQueueFile();
+    const updated = content.length && !content.endsWith("\n")
+      ? content + "\n" + newLine + "\n"
+      : content + newLine + "\n";
+
+    const res = await fetch(API_BASE, {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${GITHUB_TOKEN}`,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28"
+      },
+      body: JSON.stringify({
+        message: "Add song request",
+        content: b64EncodeUnicode(updated),
+        sha,
+        branch: BRANCH
+      })
+    });
+
+    if(res.status === 409 && attempt < 3){
+      // someone else wrote in between reading and writing — retry with fresh sha
+      return appendToQueue(newLine, attempt + 1);
+    }
+    if(!res.ok){
+      const body = await res.text();
+      throw new Error(`GitHub write failed (${res.status}): ${body}`);
+    }
+  }
+
+  const form = document.getElementById("songForm");
+  const statusEl = document.getElementById("formStatus");
+  const submitBtn = document.getElementById("submitBtn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const url = document.getElementById("yturl").value.trim();
+    const start = document.getElementById("startTs").value.trim();
+    const end = document.getElementById("endTs").value.trim();
+    const submittedAt = new Date().toISOString();
+
+    // line format: url|start|end|submittedAt   (end may be blank)
+    const line = [url, start, end, submittedAt].join("|");
+
+    submitBtn.disabled = true;
+    statusEl.textContent = "Adding to queue...";
+
+    try {
+      await appendToQueue(line);
+      statusEl.textContent = "Added! It'll show up in the queue below shortly.";
+      form.reset();
+      loadQueue();
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = "Couldn't add that — check the token/config and try again.";
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+
+  // Pull queue.txt and show what's currently sitting in the first 5 slots
+  async function loadQueue(){
+    try{
+      const res = await fetch(
+        `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${FILE_PATH}?_=${Date.now()}`,
+        { cache: "no-store" }
+      );
+      if(!res.ok) return;
+      const text = await res.text();
+      const lines = text.split("\n").map(l => l.trim()).filter(Boolean).slice(0, 5);
+      const slots = document.querySelectorAll("#reelRow .slot");
+      slots.forEach((slot, i) => {
+        const body = slot.querySelector(".slot-body");
+        if(lines[i]){
+          const [url, start, end] = lines[i].split("|");
+          const range = end ? `${start}–${end}` : start;
+          body.textContent = `${range} — ${url.replace("https://", "")}`;
+          slot.classList.add("filled");
+        } else {
+          body.textContent = "—";
+          slot.classList.remove("filled");
+        }
+      });
+    } catch(err){
+      console.warn("Could not load queue.txt", err);
+    }
+  }
+  loadQueue();
+</script>
+
+</body>
+</html>
