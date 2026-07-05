@@ -1,0 +1,21 @@
+name: Song Request
+description: Drop a YouTube URL and the timestamp where the song actually starts.
+title: "[song]: "
+labels: ["song-request"]
+body:
+  - type: input
+    id: youtube_url
+    attributes:
+      label: YouTube URL
+      description: Full link to the video
+      placeholder: https://www.youtube.com/watch?v=xxxxxxxxxxx
+    validations:
+      required: true
+  - type: input
+    id: timestamp
+    attributes:
+      label: Timestamp
+      description: Where the song begins. Use m:ss or h:mm:ss
+      placeholder: "1:23"
+    validations:
+      required: true
